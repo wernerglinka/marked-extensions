@@ -1,0 +1,24 @@
+{
+  "name": "marked-extensions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A collection of marked extensions for rich content authoring in Markdown",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "mocha packages/*/test/**/*.js",
+    "test:shared": "mocha packages/shared/test/**/*.js",
+    "test:image": "mocha packages/image-with-class/test/**/*.js",
+    "test:link": "mocha packages/link-with-class/test/**/*.js",
+    "test:paragraph": "mocha packages/paragraph-with-class/test/**/*.js",
+    "test:directive": "mocha packages/directive-block/test/**/*.js"
+  },
+  "devDependencies": {
+    "mocha": "^10.0.0",
+    "marked": "^17.0.0"
+  },
+  "author": "Werner Glinka",
+  "license": "MIT"
+}
