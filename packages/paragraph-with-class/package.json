@@ -1,6 +1,6 @@
 {
   "name": "@wernerglinka/marked-paragraph-with-class",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A marked extension for paragraphs with CSS class attributes",
   "type": "module",
   "main": "index.js",
