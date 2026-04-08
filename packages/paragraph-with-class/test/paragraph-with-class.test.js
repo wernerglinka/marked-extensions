@@ -54,6 +54,16 @@ describe('paragraph-with-class', () => {
       const token = extension.tokenizer('text {no-dots}\n');
       assert.strictEqual(token, undefined);
     });
+
+    it('skips {.class} inside backticks in start()', () => {
+      const result = extension.start('Use `{.classname}` for classes\n');
+      assert.strictEqual(result, -1);
+    });
+
+    it('returns undefined from tokenizer when {.class} is inside backticks', () => {
+      const token = extension.tokenizer('Use `{.classname}` for classes\n');
+      assert.strictEqual(token, undefined);
+    });
   });
 
   describe('rendering through marked', () => {
@@ -71,6 +81,12 @@ describe('paragraph-with-class', () => {
       const html = instance.parse('Just a plain paragraph.\n');
       assert.ok(html.includes('<p>'));
       assert.ok(!html.includes('class='));
+    });
+
+    it('does not consume {.class} inside inline code', () => {
+      const html = instance.parse('Use `{.classname}` on the opening fence.\n');
+      assert.ok(html.includes('<code>{.classname}</code>'));
+      assert.ok(!html.includes('class="classname"'));
     });
   });
 });

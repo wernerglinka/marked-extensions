@@ -41,6 +41,25 @@ import { parseClassNames } from '@wernerglinka/marked-extensions-shared';
 const PARAGRAPH_WITH_CLASS_PATTERN = /^(?!!\[)(?!\[)([^\n]+?)\s*\{([^}]+)\}\s*(?:\n|$)/;
 
 /**
+ * Check whether the character at a given index sits inside a backtick span.
+ * Counts unescaped backticks from the start of the line — an odd count means
+ * the position is inside inline code.
+ *
+ * @param {string} line - The full line of text
+ * @param {number} index - Position to test (relative to line start)
+ * @returns {boolean} True when inside backticks
+ */
+function isInsideBackticks(line, index) {
+  let backtickCount = 0;
+  for (let i = 0; i < index; i++) {
+    if (line[i] === '`') {
+      backtickCount++;
+    }
+  }
+  return backtickCount % 2 === 1;
+}
+
+/**
  * Create the marked extension object for paragraph-with-class.
  *
  * @returns {Object} A marked block extension definition
@@ -53,7 +72,8 @@ function paragraphWithClass() {
     /**
      * Find the start index of a potential paragraph-with-class token.
      * Scans for '{.' which signals a class attribute on the line.
-     * Skips lines that start with image or link syntax.
+     * Skips lines that start with image or link syntax and lines
+     * where the '{.' appears inside inline code (backticks).
      *
      * @param {string} source - Raw Markdown source text
      * @returns {number} Index of potential match start, or -1
@@ -72,12 +92,20 @@ function paragraphWithClass() {
         const lineContent = source.slice(lineStart).trimStart();
 
         // Skip lines that are image or link syntax
-        if (!lineContent.startsWith('![') && !lineContent.startsWith('[')) {
-          return lineStart;
+        if (lineContent.startsWith('![') || lineContent.startsWith('[')) {
+          searchFrom = index + 2;
+          continue;
         }
 
-        // Continue searching after this occurrence
-        searchFrom = index + 2;
+        // Skip when {. is inside inline code backticks
+        const lineEnd = source.indexOf('\n', index);
+        const fullLine = source.slice(lineStart, lineEnd === -1 ? undefined : lineEnd);
+        if (isInsideBackticks(fullLine, index - lineStart)) {
+          searchFrom = index + 2;
+          continue;
+        }
+
+        return lineStart;
       }
 
       return -1;
@@ -97,6 +125,13 @@ function paragraphWithClass() {
       }
 
       const [raw, text, attributes] = match;
+
+      // Skip when the class attribute is inside inline code
+      const braceIndex = raw.indexOf('{.' + attributes);
+      if (isInsideBackticks(raw, braceIndex)) {
+        return undefined;
+      }
+
       const classes = parseClassNames(attributes);
 
       // Only match if we actually got valid class names
